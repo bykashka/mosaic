@@ -58,8 +58,6 @@ image_colection = '/home/byka/images/vacation/'
 im_out_mozaik = 'vacation.png'
 resize_dir_name = "resize_vacation_pic"
 resize_dir = os.path.join(work_dir, resize_dir_name)
-#print resize_dir
-#base_size = 256
 db_name = "vacation.db"
 
 
@@ -82,13 +80,11 @@ if not os.path.exists(resize_dir):
 
 print 'create dir - %s' % resize_dir_name
 
-#print os.path.join(image_colection, "*.jpg")
-
-
 files = glob.glob(os.path.join(image_colection, "*.JPG"))
 files += glob.glob(os.path.join(image_colection, "*.jpg"))
 
 #print "Files -", files
+
 # Input data to db
 conn = sqlite3.connect(os.path.join(work_dir, db_name))
 c = conn.cursor()
@@ -107,11 +103,9 @@ for f in files:
             im_resize = im.resize(get_proportion(w, h,
                                     base_size=output_pixel_size),
                                     1)  # what is 0!!!
-            #print "file %s was resized..." % f
 
             # get r, g, b color
             r, g, b = get_color(im_resize)
-#            print r, g, b
             # create new image for paste im_resize, and set base color.
             im_for_pixel = Image.new("RGBA",
                                     size=(output_pixel_size,
@@ -128,7 +122,6 @@ for f in files:
 
             im_for_pixel.paste(im_resize, (x, y))
             im_for_pixel.save(save_path)
-            #print "file %s was detected color..." % f
             data = (save_path, r, g, b)
             #  todo, correct work with non ascii symbols
             try:
@@ -137,7 +130,6 @@ for f in files:
                     data)
             except:
                 print "File name contains non ASCII symbols..."
-            #print "file %s was insert to db..." % f
 
         else:
             print "file %s is wrong mode..." % f
@@ -151,36 +143,13 @@ resize_image_for_mozaik = 1
 if resize_image_for_mozaik:
     w, h = im.size
     im = im.resize((get_proportion(w, h, 1024)), 0)
-#im = Image.open('99px_ru_avatar_vkontakte_11995.jpg', 'r')
 w, h = im.size
 print "w, h - %s, %s" % (w, h)
-#mozaika_res_w, mozaika_res_h = w, h #get_proportion(w, h)
 
 im_out = Image.new("RGBA", size=(w, h), color=(255, 255, 255, 255))
 #im_out.paste(im, (0, 0))
 print im_out.size
-#im_out = Image.new("RGB", size = (mozaika_res_w*output_pixel_size,
-#                                 mozaika_res_h*output_pixel_size))
 print "Create output image..."
-
-#im_resize = im.resize((mozaika_res_w, mozaika_res_h), 0) # what is 0!!!
-#im_resize.save(os.path.join(work_dir, 'im_resize.jpg'))
-#print "Resize input image..."
-
-# Color generating
-
-
-def color_sheme_generate():
-    colors = {}
-    for a in range(0, 265, 256 / 8):
-        for b in range(0, 265, 256 / 8):
-            for c in range(0, 265, 256 / 8):
-#                for c in range(0, 265, 256 / 8):
-
-                colors[(a, b, c)] = 0
-
-    return colors
-
 
 f_test_name = 1
 #############################################################
@@ -194,11 +163,8 @@ def image_manipulation_test(i, j, C, d, lin, c, im_out):
     lin - some symbol
     c - db cursor
     """
-#        global f_test_name
-#        for i in xrange(ir, ir + C, C / d):
-#            for j in xrange(jr, jr + C, C / d):
+
     r = g = b = []
-#    color_sheme = color_sheme_generate()
 
 # Find the main color of pise of image
 
@@ -210,13 +176,10 @@ def image_manipulation_test(i, j, C, d, lin, c, im_out):
                 b.appent(im.getpixel((i_px, j_px))[2])
             except:
                 pass
-            #print r, g, b
 
     r_total = sum(r) / len(r)
     g_total = sum(g) / len(g)
     b_total = sum(b) / len(b)
-
-    #print (r_total, g_total, b_total)
 
 # Find the main color in persent
     total = 0
@@ -228,51 +191,24 @@ def image_manipulation_test(i, j, C, d, lin, c, im_out):
                     if g_total <= g < g_total + 32:
                         if b_total <= b < b_total + 32:
                             total += 1
-                            #print total
             except:
                 pass
 
     in_persent = total * 100 / ((C / d) * (C / d))
-#    print in_persent, '%'
-###############################################################################
-
-###############################################################################
-            #
-            #for key in color_sheme.keys():
-                #r_cs, g_cs, b_cs = key
-                #if r_cs <= r < r_cs + 32:
-                    #if g_cs <= g < g_cs + 32:
-                        #if b_cs <= b < b_cs + 32:
-                            ##print key
-                            #color_sheme[key] += 1
-    #list_of_colors = []
-    #for key in color_sheme.keys():
-        #list_of_colors.append([color_sheme[key], key])
-    #list_of_colors.sort()
-
-    #color = list_of_colors[-1][1]
-    #total = list_of_colors[-1][0]
-    #in_persent = total * 100 / ((C / d) * (C / d))
-    ##print "in_persent - %s" % in_persent, (C / d)*(C / d)
-
-###############################################################################
 
     x, y = i, j
 
     if in_persent < 40 and d <= 4:
         d = d * 2
-        #print "C, d = ", C, d
         add_value = (C / d) * 2
         for i_new in xrange(i, i + add_value, C / d):
             for j_new in xrange(j, j + add_value, C / d):
-                #print i_new, j_new
                 image_manipulation_test(i_new, j_new, C, d, lin, c, im_out)
     else:
-        #print d
         db_result = c.execute("""SELECT path, r, g, b, ((r-%s)*(r-%s) +
                                 (g-%s)*(g-%s) +
                                 (b-%s)*(b-%s)) AS dcolor FROM colors
-                                ORDER BY dcolor ASC LIMIT 10""" %
+                                ORDER BY dcolor ASC LIMIT 5""" %
                         (str(r_total), str(r_total),
                         str(g_total), str(g_total),
                         str(b_total), str(b_total))
@@ -281,24 +217,15 @@ def image_manipulation_test(i, j, C, d, lin, c, im_out):
         for f in db_result:
             paths.append(f)
         index = random.randint(1, len(paths))
-        #print index, len(paths)
         im_pixel = paths[index - 1]
-        #print im_pixel
         im_insert_pixel = Image.open(im_pixel[0], 'r')
         im_res = im_insert_pixel.resize((C / d, C / d), 1)
-#        print d,
-#        print im_res.split()
-#        r, g, b, a = im_res.split()
-        #print a
-
-        #print im_out
         try:
             im_out.paste(im_res, (x, y), im_res.split()[3])
             #im_out.save("./test/%s.png" % f_test_name)
             f_test_name += 1
         except:
             pass
-        #print "Paste"
 
     return True
 
