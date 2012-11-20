@@ -4,10 +4,9 @@
 
 import sqlite3
 import Image
-import os, sys
+import os
 import glob
 import numpy
-
 
 
 def get_color(im_obj):
@@ -31,13 +30,14 @@ def get_color(im_obj):
     b = b / (x * y)
     return (r, g, b)
 
-def get_proportion(w, h, base_size = 256):
+
+def get_proportion(w, h, base_size=256):
     """
-    Return new proportion (w, h). 
+    Return new proportion (w, h).
     """
     large_side = base_size
     k = float(w) / float(h)
-    
+
     if w > h:
         w_prop = large_side
         h_prop = int(w_prop / k)
@@ -89,28 +89,31 @@ for f in files:
     print f
     # path to save resize file
     sawe_path = os.path.join(resize_dir, os.path.basename(f))
-    
+
     if not os.path.exists(sawe_path):
         im = Image.open(f)
         if im.mode == 'RGB':
             w, h = im.size
             # proportional resize image for pixel
-            im_resize = im.resize(get_proportion(w, h, base_size = output_pixel_size), 0) # what is 0!!!
+            im_resize = im.resize(get_proportion(w, h,
+                            base_size=output_pixel_size), 0)  # what is 0!!!
             #print "file %s was resized..." % f
 
             # get r, g, b color
             r, g, b = get_color(im_resize)
             print r, g, b
             # create new image for paste im_resize, and set base color.
-            im_for_pixel = Image.new("RGB", size = (output_pixel_size, output_pixel_size), color = (r, g, b))
+            im_for_pixel = Image.new("RGB",
+                                    size=(output_pixel_size, output_pixel_size),
+                                    color = (r, g, b))
 
             w_resize, h_resize = im_resize.size
             if w_resize >= h_resize:
                 x = 0
-                y = output_pixel_size/2 - h_resize/2
+                y = output_pixel_size / 2 - h_resize / 2
             else:
                 y = 0
-                x = output_pixel_size/2 - w_resize/2
+                x = output_pixel_size / 2 - w_resize / 2
 
             im_for_pixel.paste(im_resize, (x, y))
             im_for_pixel.save(sawe_path)
@@ -119,7 +122,7 @@ for f in files:
 
             c.execute("INSERT INTO colors (path, r, g, b) values (?, ?, ?, ?)", data)
             #print "file %s was insert to db..." % f
-            
+
         else:
             print "file %s is wrong mode..." % f
 conn.commit()
@@ -130,10 +133,11 @@ w, h = im.size
 #mozaika_res_w, mozaika_res_h = w, h
 mozaika_res_w, mozaika_res_h = get_proportion(w, h)
 
-im_out = Image.new("RGB", size = (mozaika_res_w*output_pixel_size, mozaika_res_h*output_pixel_size))
+im_out = Image.new("RGB", size=(mozaika_res_w * output_pixel_size,
+                                mozaika_res_h * output_pixel_size))
 #print "Create output image..."
 
-im_resize = im.resize((mozaika_res_w, mozaika_res_h), 0) # what is 0!!!
+im_resize = im.resize((mozaika_res_w, mozaika_res_h), 0)  # what is 0!!!
 im_resize.save(os.path.join(work_dir, 'im_resize.jpg'))
 #print "Resize input image..."
 
@@ -145,9 +149,9 @@ for i in xrange(mozaika_res_h):
     for j in xrange(mozaika_res_w):
 #        r, g, b = im.getpixel((j, i))
         r, g, b = im_resize.getpixel((j, i))
-        
-        d = c.execute("""SELECT path, r, g, b, ((r-%s)*(r-%s) + 
-                                        (g-%s)*(g-%s) + 
+
+        d = c.execute("""SELECT path, r, g, b, ((r-%s)*(r-%s) +
+                                        (g-%s)*(g-%s) +
                                         (b-%s)*(b-%s)) AS dcolor FROM colors
                         ORDER BY dcolor ASC LIMIT 5""" %
                       (str(r), str(r), str(g), str(g), str(b), str(b))
@@ -159,7 +163,8 @@ for i in xrange(mozaika_res_h):
         im_pixel = paths[index]
         #print im_pixel
         im_insert_pixel = Image.open(im_pixel[0], 'r')
-        im_out.paste(im_insert_pixel,(j*output_pixel_size, i*output_pixel_size))
+        im_out.paste(im_insert_pixel, (j * output_pixel_size,
+                                    i * output_pixel_size))
     #percent = i * 100 / mozaika_res_h
     #print percent
 print "Thenks for waiting!"
